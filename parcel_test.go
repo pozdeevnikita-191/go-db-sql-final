@@ -33,9 +33,8 @@ func getTestParcel() Parcel {
 func TestAddGetDelete(t *testing.T) {
 	// prepare
 	db, err := sql.Open("sqlite", "tracker.db")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
+
 	defer db.Close()
 
 	_, err = db.Exec("DELETE FROM parcel") // - очистка
@@ -74,9 +73,8 @@ func TestAddGetDelete(t *testing.T) {
 func TestSetAddress(t *testing.T) {
 	// prepare
 	db, err := sql.Open("sqlite", "tracker.db")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
+
 	defer db.Close()
 
 	_, err = db.Exec("DELETE FROM parcel") // - очистка
@@ -99,18 +97,20 @@ func TestSetAddress(t *testing.T) {
 
 	// check
 	// получите добавленную посылку и убедитесь, что адрес обновился
-	p, err := store.Get(num)
+	parcelNew, err := store.Get(num)
 	require.NoError(t, err)
-	assert.Equal(t, p.Address, newAddress)
+
+	parcel.Address = newAddress
+	parcel.Number = num
+	assert.Equal(t, parcel, parcelNew)
 }
 
 // TestSetStatus проверяет обновление статуса
 func TestSetStatus(t *testing.T) {
 	// prepare
 	db, err := sql.Open("sqlite", "tracker.db")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
+
 	defer db.Close()
 
 	_, err = db.Exec("DELETE FROM parcel") // - очистка
@@ -133,9 +133,12 @@ func TestSetStatus(t *testing.T) {
 
 	// check
 	// получите добавленную посылку и убедитесь, что статус обновился
-	p, err := store.Get(num)
+	parcelNewS, err := store.Get(num)
 	require.NoError(t, err)
-	assert.Equal(t, p.Status, newStatus)
+
+	parcel.Status = newStatus
+	parcel.Number = num
+	assert.Equal(t, parcelNewS, parcel)
 
 }
 
@@ -143,9 +146,8 @@ func TestSetStatus(t *testing.T) {
 func TestGetByClient(t *testing.T) {
 	// prepare
 	db, err := sql.Open("sqlite", "tracker.db")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
+
 	defer db.Close()
 
 	_, err = db.Exec("DELETE FROM parcel") // - очистка
@@ -190,11 +192,11 @@ func TestGetByClient(t *testing.T) {
 	// убедитесь, что количество полученных посылок совпадает с количеством добавленных
 
 	// check
-	for _, parcel := range storedParcels {
-
-		assert.Equal(t, parcelMap[parcel.Number], parcel)
+	for i := 0; i < len(parcelMap); i ++ {
+		assert.Equal(t, parcelMap[storedParcels[i].Number], storedParcels[i])
 		// в parcelMap лежат добавленные посылки, ключ - идентификатор посылки, значение - сама посылка
 		// убедитесь, что все посылки из storedParcels есть в parcelMap
 		// убедитесь, что значения полей полученных посылок заполнены верно
+		assert.NotEmpty(t, parcelMap[storedParcels[i].Number])
 	}
 }
